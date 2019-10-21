@@ -1,0 +1,102 @@
+Linux Commands:
+1. Server/Computer Name:
+	hostname 
+2. IP address:
+	ifconfig
+
+(dollor)$-symbol means a user
+3. change user to root
+	sudo su -
+	
+# Linux folder structure
+
+4. Create directory
+	mkdir
+5. change directory
+	cd 
+6. remove directory
+	rmdir
+7. currect directory
+	pwd
+8. List
+	ls
+9. list with permissions
+	ll
+
+
+10. create file
+	touch <filename>
+11. Edit file
+	nano <filename>
+	vi <filename> then press i
+	vim <filename> then press i 
+12. save file
+	ctrl+o
+	Esc :wq  (save and exist)
+13. exit from file
+	ctrl+x
+14. create a user
+	useradd raju
+	password raju
+	enter password:
+15. Running process
+	ps -ef
+16. Remove files and directory
+	rm <filename>
+	rmdir <directory>
+17. Delete all files in a folder
+	rm -rf *
+18. read a file
+	cata <files>
+19. IP configuration file
+	cat /etc/network.interfaces
+
+Adding disks and creating partitions:
+1. add an addition #gb for server
+2. power on the server and check the drive is visible using "lsblk"
+3. format the new fdisk and create three partition
+4. create filesystem on all the 3 drive using "mkfs.ext4"
+5. create 3 folders and name it as 5GBFolder1,2,3
+6. Mount the 3 partitions to the 3 folders and put some files in it.
+7. Reboot the server and check data is visible or not.
+
+#1: add new virtual disk 15GB
+#2: power on the server. 
+verify whether drive is available or not.
+	lsblk
+	
+#3: 
+	fdisk  (format disk)
+	fdisk /dev/sdb
+	m	(help)
+	p	(print partition)
+	lsblk
+	fdisk /dev/sda
+	
+	fdisk /dev/sdb
+	p
+	n	(new partition)
+	1
+	+5G
+	
+	n
+	2
+	+5G
+	
+	n
+	3
+	+5000M
+	
+	p
+	w	(save)
+	
+
+## install openssh server
+sudo apt-get install openssh-server
+
+----**configure SSH server to allow root ssh login**------
+sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+
+#restart ssh server to apply changes
+sudo service ssh restart
+
