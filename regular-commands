@@ -54,12 +54,12 @@ Linux Commands:
 Adding disks and creating partitions:
 1. add an addition #gb for server
 2. power on the server and check the drive is visible using "lsblk"
-3. format the new fdisk and create three partition
+3. format the new fdisk and create three partition. 3 x 5GB
 4. create filesystem on all the 3 drive using "mkfs.ext4"
 5. create 3 folders and name it as 5GBFolder1,2,3
 6. Mount the 3 partitions to the 3 folders and put some files in it.
 7. Reboot the server and check data is visible or not.
-8. 
+8. Edit /etc/fstab and mention the mounts there.
 
 #1: add new virtual disk 15GB
 #2: power on the server. 
@@ -78,18 +78,45 @@ verify whether drive is available or not.
 	p
 	n	(new partition)
 	1
+	enter
 	+5G
 	
 	n
 	2
+	enter
 	+5G
 	
 	n
 	3
+	enter
 	+5000M
 	
 	p
 	w	(save)
+4.	mkfs.ext4 /dev/sdb1
+	mkfs.ext4 /dev/sdb2
+	mkfs.ext4 /dev/sdb3
+	
+5.	mkdir /5GBFolder1  (at root directory)
+	mkdir /5GBFolder2
+	mkdir /5GBFolder3
+6.	lsblk
+	mount /dev/sdb1 /5GBFolder1
+	mount /dev/sdb2 /5GBFolder2
+	mount /dev/sdb3 /5GBFolder3
+	
+	df -h
+	
+7.	once you rebooted the server, newly mounted data will not be displayed. Need to add these on /etc/fstab
+8.	nano /etc/fstab
+
+	add below mount points
+	/dev/sdb1  /5GBFolder1
+	/dev/sdb2  /5GBFolder2
+	/dev/sdb3  /5GBFolder3
+	
+	
+
 	
 
 ## install openssh server
@@ -101,3 +128,31 @@ sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh
 #restart ssh server to apply changes
 sudo service ssh restart
 
+
+LVM: Logical Volume Manager
+https://techienotes.blog/2016/09/24/create-lvm-physical-volumes-volume-groups-and-logical-volumes-on-ubuntu-16-04/
+
+1.	sudo pvcrete /dev/sda
+	physical volume "/dev/sda" successfully creted
+2.	sudo vgcreate vgData /dev/sda
+	Volume group "vgData" successfully creted
+3.	
+4.	
+
+
+	lsblk
+	lvmdiskscan
+	pvcreate /dev/xvdb /dev/xvdc /dev/xvdd 
+	vgcreate vgData /dev/xvdb /dev/xvdc
+	vgdisplay
+	lvcreate help
+	lvcreate -l 2G -n vgVol01 vgData
+	lvdisplay
+	vgdisplay
+	pvdisplay
+	lvcreate -l 8G -n vgVol02 vgData
+	vgdisplay
+	lvcreate -l 2G -n vgVol02 vgData   (give error as insufficient)
+	
+	
+	
