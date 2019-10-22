@@ -59,6 +59,7 @@ Adding disks and creating partitions:
 5. create 3 folders and name it as 5GBFolder1,2,3
 6. Mount the 3 partitions to the 3 folders and put some files in it.
 7. Reboot the server and check data is visible or not.
+8. 
 
 #1: add new virtual disk 15GB
 #2: power on the server. 
