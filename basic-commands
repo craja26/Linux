@@ -1,0 +1,16 @@
+Basic commands:
+1.	ifconfig --interface config- linux IP address
+2.	pwd		-- present working directory
+3. 	cd		-- change directory
+4.	ls		-- list files
+    ls -a (or) ls -al	-- list all files
+	  man ls	-- information about list parameters
+5.	mkdir	-- create directory
+	  rmdir	-- remove directory
+6.	ls /etc | grep -i myfolder		-- searching "myfolder" directory in /etc directory
+7.	vi, vim, nano for editany file.
+8.	uptime		-- displays server up time
+9.	cat			-- read a file
+10.	lsb_release -a		-- find ubuntu release version
+	  cat /etc/redhat-release		-- find centos/redhat release version
+	  uname -a		-- Linux version information
