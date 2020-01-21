@@ -12,3 +12,5 @@ crontab -r
 
 -> check specific user schedules
 crontab -u username -l
+
+#Ref: https://crontab.guru/
