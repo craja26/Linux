@@ -876,7 +876,7 @@ Example:
 			#nmcli connection show
 			# cat /etc/sysconfig/network-scripts/ifcfg-coss
 			- add ip address
-			# nmcli connection modify coss ipv4.addresses 172.25.250.10/24 ipv4.172.25.250.254 ipv.dns 172.25.254.254 ipv4.dns-search lab.example.com ipv4.method static
+			# nmcli connection modify coss ipv4.addresses 172.25.250.10/24 ipv4.172.25.250.254 ipv4.dns 172.25.254.254 ipv4.dns-search lab.example.com ipv4.method static
 			
 			-check entries
 			# cat /etc/sysconfig/network-scripts/ifcfg-coss
@@ -890,9 +890,229 @@ Example:
 					- Ethernet
 						- Add required details and save it.
 						
-			
+- Practice:			
+		- # hostnamectl  (check host details)
+		- # hostnamectl set-hostname servera.lab.example.com		(set static hostname)
+		- # nmcli connection modify "Wired connection 1" ipv4.addresses 172.25.250.10/24 ipv4.dns 172.25.254.254 ipv4.gateway 172.25.254.254 ipv4.dns-search lab.example.com ipv4.method static
+		- # nmcli connection modify "Wired connection 1" ipv4.dns-search lab.example.com
+		- # nmcli connection up "Wired connection 1"
+	- Add new connection:
+		- # nmcli connection add con-name redhat type ethernet ifname enp1s0
+		- # nmcli connection modify redhat ipv4.addresses 10.0.0.10/18 ipv4.gateway 10.0.0.254 ipv4.method static 
+		- # nmcli connection up redhat
+		- # vim /etc/sysconfig/network-scripts/ifcfg-redhat
+			- verify ONBOOT values. It should be yes to get an active connection after reboot.
 		
 Note: on a single device(enp1s0) you can add multiple connections at a time. only one connection is active.
 		
 	- dynamic(dhcp):
+
+
+/******* Archiving and compression *******/
+- tar: tape archiving = collection with reduction
+- gzip, bzip2, xz --- compression tools
+- gunzip, bunzip2, unxz ---- uncompression tool.
+- create a tar file: "-c"
+- how to read content of the compressed file: -t = to list the tar files content
+- -x = extract the tar file contents
+- -f = to specify the file name
+- -c = verbosity
+- -z = to compress with gzip tool
+- -j = to compress with bzip2
+- -J =  to compress with xz tool
+
+- How to check size?
+	- # du -sh /etc
+- create a tar file for /etc.
+	- # tar -cvf /root/coss.tar /etc
+	- # du -sh coss.tar    (check file size)
+- zip/compress file using gzip compression tool
+	- # gzip coss.tar
+	- # du -sh coss.tar.gz
+
+- gz: data writing is high compression is low.
+- bz2: data writing is low but compression high
+- xz: both writing and compression is high
+
+- uncompression:
+	- # gunzip coss.tar.gz
+
+- compress and uncompress with bzip2 and xz
+	- # bzip2 coss.tar  (compress using bzip2)
+	- # bunzip2 coss.tar.bz2  (uncompression)
 	
+	- # xz coss.tar     (compress using xz)
+	- # unxz coss.tar.xz
+	
+- create a gzip
+	-using gzip
+	- # tar -czf /opt/raja_var.tar.gz /var
+	- # ls /opt
+	- # du -sh /opt/raja_var.tar.gz
+	
+	-using bunzip2
+	- # tar -cjf naveen.tar.bz2 /var
+	
+Question: create an archive '/var/tmp/backup.tar.bz2' of /usr/local directory and compress it with bzip2.
+Answer:	- # du -sh /usr/local
+		- # tar -cjf /var/tmp/backup.tar.bz2 /usr/local
+		- # du -sh /var/tmp/backup.tar.bz2
+Example:
+- Add a new file(mysql_log.txt) to a compressed file(raja_var.tar.gz)
+	- First need to unzip the existing zip file
+		# gunzip raja_var.tar.gz
+		# ls
+	- Add file to tar file
+		# tar -f raja_var.tar --update mysql_log.txt
+		# gzip raja_var.tar
+		# tar -tf raja_var.tar.gz    (list the files in zip file)
+		Note: we can also delete a file from zip file in the same way.
+- Extract files from zip file
+	- # tar -xf raja_var.tar.gz
+	- # ls
+
+/******** scp *********/
+- # scp raja.tar.gz raja@serverc:
+	- scp comes with openssh-server, openssh-clients
+- check absolute path of scp command
+	- # which scp
+		/usr/bin/scp
+- check scp rpm package
+	- # rpm qf /usr/bin/scp
+		openssh-clients-7...........
+	- # yum whatprovides /usr/bin/scp
+
+- copy file from remote machine to local
+	- # scp root@serverc:/root/raja_var.tar.gz .
+	- # ls
+
+/******* rsync (remote synchronization) ********/
+- It will synchronize files between source and destination
+	- # rsync  raja_var.tar.gz root@servera:/opt
+	
+
+
+/********** Package management ***********/
+- nothing but a software
+- it contains some configuration files, library files, modules(from RHEL-8), documents, document root etc.
+- There are two tools to manage packages
+	- rpm: redhat package manager
+	- yum: yellowdog updater modifier
+- utility server contains all the required softwares
+
+- download a package
+	- # wget http://path..............
+
+- verify package whether installed or not.
+	- # rpm -qa <package name/software>
+	- # rpm -qa tree
+	
+- each package consists four parts
+	- package name
+	- version
+	- release
+	- architecture support details
+- query information about a package
+	- # rpm -qi tree
+	
+- check configuration settings
+	- # rpm -qc openssh-server
+
+- check documentation
+	- # rpm -qd openssh-server
+
+- list out all the files
+	- # rpm -ql openssh-server
+
+- remove a package 
+	- # rpm -e tree   (-e means erase)
+
+- install a package  (-i install, v visibility, h process) using image file- rpm
+	- download iso image
+		- # wget http://...............
+	- mount iso image file
+		- # mkdir /raja
+		- # mount rehl-8.0......iso /sandeep/
+		- # ls /sandeep/
+			(FYI... BaseOS: provides core package content, AppStream: various application streams available here)
+		- # cd /sandeep/BaseOS
+		- # cd Packages/
+		- # ls
+	- install package
+		- # rpm -ivh zsh-5.5.....x86_64.rpm  
+			Note: "yum" always looks for the latest software. So, no need to provide a full package path but "rpm" needs a specific path and not look for latest packages.
+		- # rpm -qa zsh (checking package whether installed or not)
+
+- install a package without dependencies.
+	- # rpm -ivh zlib-1.2XXXX.rpm --nodeps
+		Note: without dependencies you may face issues while using the application.
+	
+- ls, pwd, head, cat, tail comes from the "coreutils" package.
+- coreutils package comes from baseOS packages.
+
+- ***yum ***
+- yum is always taking latest package from repository and resolve dependency first
+- example 
+	- # yum install <package name>
+
+- list installed packages
+	- # yum list installed coreutils
+- check information about package
+	- # yum info coreutils
+- remove package
+	- # yum remove <package>
+
+- install group of packages
+	- # yum group install <package>
+- yum package information
+	- # yum whatprovides /usr/bin/scp
+- yum history
+	- # yum history
+	- # yum history info 6
+- remove package using history
+	- # yum history
+	- # yum history undo 6 
+- list repository
+	- # yum repolist
+	
+- remove repository
+	- # rm -rf /etc/yum.repos.d/*
+- create a yum repository
+	- # vim /etc/yum.repos.d/coss.repo
+		[ex124]
+		name=BaseOS
+		baseurl=http://BaseOS_url/BaseOS
+		enabled=1
+		gpgcheck=0
+		[ex134]
+		name=AppStream
+		baseurl=http://anotherURL/AppStream
+		enabled=1
+		gpgcheck=0
+	:wq!
+	- # yum repolist
+	
+- Managing Package Module Streams
+- Check modules list
+	- # yum modules list
+	- # yum module list perl
+- information about module
+	- # yum module info perl
+- check information about specific version
+	- # yum module info --profile perl:5.24
+- install specific module
+	- # yum module install perl
+- check package is installed or not
+	- # yum module list perl
+- disable a module
+	- # yum module disable perl
+- remove a module
+	- # yum module remove perl
+
+
+	
+
+
+
+	
+
