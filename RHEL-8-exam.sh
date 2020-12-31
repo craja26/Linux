@@ -532,7 +532,7 @@ Question: create a directory in /home called storage change the group ownership 
 			# ls -ld /google/		(checking permissions)
 			# chmod g+w /google/
 			# ls -ld /google/		(checking permissions)
-			# su - dax		(change user loging to dax)
+			# su - dax		(change user login to dax)
 			# cd /google/
 				Permissions denied error
 			# chown :manager /google/
@@ -542,7 +542,7 @@ Question: create a directory in /home called storage change the group ownership 
 			
 			
 	- sticky bit: users with write permission on their directory, can remove the file they own. They cannot remove/modify for the other users. It is always applied to the folder.
-		- syntax: chmod o+t <folder> numberical value 1
+		- syntax: chmod o+t <folder> numerical value 1
 		Example: # chmod o+t /google/
 			# ls -ld /google/
 		
@@ -1109,10 +1109,228 @@ Example:
 - remove a module
 	- # yum module remove perl
 
-
+- search specific package
+	- # yum module info python36
+	- # yum module list | grep python
 	
+- install python36
+	- # yum module install python36:3.6/common
+	or
+	- # yum module install @python36
 
 
+/******* Partition ********/
+- Storage: 
+	1. Directly attache storage
+	2. Network attach storage
+	3. Storage area network
 
+- Mangagin physical storage:
+	1. each partition contain file system
+	2. a raw data space
+	3. a swap space
+
+a. SATA disc(/dev/sda, /dev/sdb)
+b. IDE disc(/dev/hda, /dev/hdb)
+c. Virtual disk(/dev/vda, /dev/vdb)
+
+- Identify storage: 
+	# fdisk -l
+	# parted -l
+- What is /dev/vda1 = 1st virtual disk 1st partition
+- /dev/vdb3 = 2nd virtual disk 3rd partition
+
+- There are two types of partition schemes
+	1. MBR/DOS/BIOS partition scheme
+		DOS: you can create maximum 4 primary partition. One out of four partition, we can make it extended partition.
+			you can create logical partition on extended partition. Extended partition never be formatted.
+		MBR: Master boot record: first sector of hard disk.= 512 bytes
+			446 = IPL, 64 bytes = PTI, 2 bytes = Magic no.
+		- Create 100MB of partition
+			- # parterd -l
+			- add a primary partition
+				- # fdisk /dev/vdb
+					: m
+					: n
+					: p
+					: 1
+					:  (enter)
+					: +100M
+					: p
+					: w
+			- update partition table information.
+				- # partprobe
+			- format the device
+				- # ls -l /dev/vdb1
+				- # mkfs.ext3 /dev/vdb1   (formating file system)
+			- check it is formated or not
+				- # blkid /dev/vdb1
+			- create a mount point point
+				- # mkdir /storage
+			- mount it
+				- # mount /dev/vdb1 /mnt  (temporary mount)
+				- temporary mount info stored in /etc/mtab
+				- # /etc/mtab
+			- df -hT
+			Note: in this a temporary mounting. Once server is rebooted, it is unmounted. We have to attach drive again.
+			- remount after reboot
+				- # mount /dev/vdb1 /mnt
+				
+Question: Create a 1GB partition in the 2nd virtual disk 3rd partition?
+Answer: /dev/vdb3 
+	- # fdisk -l
+	- # fdisk /dev/vdb 
+		: p (existing checking partitions)
+		: n (add new partition)
+		:   ( if you don't give anything it will take it as a primary partition)
+		: 3 ()
+		:   (press enter)
+		: +1G
+		: p
+		:w  (save)
+		# partprobe  (update partition table information)
+		# lsblk ( check)
+		# lsblk  -fp   (check with full path)
+		# mkfs -t xfs /dev/vdb3     (format )
+		# lsblk  -fp   (check with full path)
+		# mkdir /data  (CREATE mount point)
+		# mount /dev/vdb3  /data (mount temporary)
+		# df -hT
+		or
+		# lsblk  -fp   (check with full path)
+		-- mount perminantly
+		# unmount /data   (first unmount temporary mount)
+		# blkid /dev/vdb3  (just copy UUID to mount perminantly)
+		# vim /etc/fstab   
+			- go last line, take new line and add UUID and other details like below then save it.
+			UUID="Copy UUID copied in the above step."	/data	xfs	defaults	0	0
+		# systemctl daemon-reload   (Don't reboot, run this command.)
+		# mount -a
+		# df -hT
+	-- Troubleshoot if you got any error while running "mount -a" (don't reboot your machine if you got any issue.)
+		- you have to fix the issue, if you restart machine. It will start with maintenance mode.
+		# mount -o remount,rw /
+		# mount -a   (check the error message)
+		# vim /etc/fstab
+			(comment this errored line)
+		# systemctl daemon-reload
+		# reboot (reboot machine)
+	-- a disk and formated but not yet mounted. mount this in /storage
+		# mkdir /storage
+		# lsblk -fp
+			or
+		# blkid
+			-- copy UUID
+		# vim /etc/fstab
+			UUID="add copied UUID"	/storage	ext3	defaults 0 0 
+			(Note: here third field is file system)
+		# systemctl daemon-reload
+		# mount -a
+		# df -hT
+
+- resize is not possible in normal partition.
+- naming convention is not there.
+
+-- LVM (Logical Volume manager):
+	- Use entire store and create 100MB primary partition and 100MB logical partition
+		# fdisk -l
+		# fdisk /dev/vdb
+			: p
+			: n
+			: p
+			: 1
+			: +100M
+			: n
+			: e (entended partition)
+			:
+			:
+			: +3G
+			: p
+			: n
+			: l
+			:
+			: +100M
+			: p
+			: t   (changing the partition type)
+			: 1
+			: 8e
+			: l (get code.)
+			: n
+			: p
+			:
+			: +1G
+			: p
+			: w
+		# partprobe ( don't format disk, create physical Volume)
+		# pvs (checking physical Volume
+		# pvcreate /dev/vdb{1,5}
+		# pvs
+		# vgcreate       ( Volume group, )
+		# vgcreate redhatvg /dev/vdb{1,5}
+		# pvs
+		# vgs
+		# vgdisplay
+		# lvcreate -n fedora -l 10 redhatvg
+		# lvdisplay (check lvm path)
+		# mkfs.ext3 /dev/redhatvg/fedora    (format lv path, copy LV path from lvdisplay command)
+		# mkdir /secret
+		# blkid /dev/redhatvg/fedora
+		# vim /etc/fstab
+			-Add line like below.
+				UUID= "UUID of new disk"	/secret	ext3 defaults 0 0
+		# systemctl daemon-reload
+		# mount -a
+		# df -hT
+Question: Create a logical Volume and mount it permanently.
+	- create the logical volumn with the name "wshare" by using 50PE's from the volumne group "wgroup".
+	- Consider each PE size of volumne group as "8MB"
+	- Mount it on /mnt/wshare with file system vfat.
+Answer: #lvname= wshare, vgname = wgroup, pesize=8MB, -l=50, mntpt=/mnt/wshare, fs=vfat, (pe+2)*pesize = 416M(partition calculation)
+	# fdisk /dev/vdb
+		: n (new partition)
+		: p (primary partition)
+		: 1
+		:
+		: +416M
+		: t
+		: 8e
+		: p
+		: w
+	# partprobe
+	# pvcreate /dev/vdb1
+	# pvs
+	# vgcreate -s 8M wgroup /dev/vdb1
+	# vgdisplay
+	# lvcreate -n wshare -l 50 wgroup
+	# lvdisplay
+	# mkfs.vfat  /dev/wgroup/wshare   (format drive as vfat)
+	# blkid /dev/wgroup/wshare   (mount it)
+	# mkdir /mnt/wshare
+	# vim /etc/fstab
+		--add line blow or you can also use UUID instead path in the below line
+		/dev/wgroup/wshare	/mnt/wshare vfat defaults	0	0
+	# systemctl daemon-reload
+	# mount -a
+	# df -hT
 	
+-- Remove LV and VG
+	# lvremove /dev/redhatvg/fedora
+		: y 
+	# vgremove redhatvg
+	# pvs
+	
+	
+		
+Question: Add a swap partition of 512MB and mount it permanently.
+	
+		
+Note: physical Volume divided into smaller chunks, i.e. default is 4MB.	
+		
+			
+				
+- # df -hT
+
+	2. GPT/UEFI partition scheme
+
+
 
