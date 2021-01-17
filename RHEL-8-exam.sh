@@ -513,7 +513,7 @@ Question: create a directory in /home called storage change the group ownership 
 /******* special permission *******/
 - There are three types of special permissions.
 	- suid: defined as giving temporary permission to run a program file with the permission of the file owner rather than the user who runs it.
-		# chmod u+s <filename> numberical value=4
+		# chmod u+s <filename> numeric value=4
 		
 		Example: check special permissions for below files. You can find "s" instead "x" in the permissions.
 			ls -l /usr/bin/su
@@ -596,8 +596,8 @@ Answer: # cp -rvpf /ect/fstab /var/tmp/
 - A specific instance of running a program is called process.
 - unique process id = pid
 What is the first process running REHL-8?
-	- systemd (REHL-7/8 - systemd)
-	- upto REHL-6 init is the first process.
+	- systemd (RHEL-7/8 - systemd)
+	- upto RHEL-6 init is the first process.
 
 1. Parent process(parent process id): ppid
 	- check all terminal process:
@@ -713,7 +713,7 @@ What is the first process running REHL-8?
 	- public key
 - how to generate ssh key
 	- first check ssh key: # ls .ssh
-	- generate key: # ssh-kaygen  (it will generate unique state key. It uses RSA algorithm )
+	- generate key: # ssh-keygen  (it will generate unique state key. It uses RSA algorithm )
 		hit enter enter enter
 		It will key files in .ssh directory
 		# ls .ssh
@@ -1121,12 +1121,12 @@ Example:
 
 /******* Partition ********/
 - Storage: 
-	1. Directly attache storage
-	2. Network attach storage
+	1. Directly attached storage
+	2. Network attached storage
 	3. Storage area network
 
-- Mangagin physical storage:
-	1. each partition contain file system
+- Managing physical storage:
+	1. Each partition contains file system
 	2. a raw data space
 	3. a swap space
 
@@ -1282,8 +1282,8 @@ Answer: /dev/vdb3
 		# mount -a
 		# df -hT
 Question: Create a logical Volume and mount it permanently.
-	- create the logical volumn with the name "wshare" by using 50PE's from the volumne group "wgroup".
-	- Consider each PE size of volumne group as "8MB"
+	- create the logical volume with the name "wshare" by using 50PE's from the volume group "wgroup".
+	- Consider each PE size of volume group as "8MB"
 	- Mount it on /mnt/wshare with file system vfat.
 Answer: #lvname= wshare, vgname = wgroup, pesize=8MB, -l=50, mntpt=/mnt/wshare, fs=vfat, (pe+2)*pesize = 416M(partition calculation)
 	# fdisk /dev/vdb
@@ -1321,16 +1321,394 @@ Answer: #lvname= wshare, vgname = wgroup, pesize=8MB, -l=50, mntpt=/mnt/wshare, 
 	
 	
 		
-Question: Add a swap partition of 512MB and mount it permanently.
+
 	
 		
 Note: physical Volume divided into smaller chunks, i.e. default is 4MB.	
-		
-			
-				
+	
+-- Extend logical volume
+	- Note: -l (physical extent, -L (actual size)
+	# lvextend -L +10M /dev/volgrp/fedora   (if given value is not divided by PE value then it will extend number match with next PE value
+	# vgdisplay
+	
+	# lvextend -l +4 /dev/volgrp/fedora
+	# vgdisplay
+	
+	# lvextend -l 20 /dev/volgrp/fedora
+	# vgdisplay
+	
+	# lvextend -L 170M /dev/volgrp/fedora
+	# vgdisplay
+	
+	# lvextend -l +50%free /dev/volgrp/fedora
+	# vgdisplay
+	
+	# lvextend -l +100%free /dev/volgrp/fedora
+	# vgdisplay
+	
+-- check which file system is formated
+	# lsblk -fp
+	
+Question: Resize a logical volume
+	- Resize the logical volume "mvlv" so that after reboot size should be in between 200MB to 300MB.
+Answer:
+	# fdisk -l
+	# lvdisplay
+	# vgs 		(checking available space)
+	# blkid /dev/myvg/mylv        (checking file system format)
+	# df -hT
+	# lvextend -L +100M /dev/myvg/mylv
+	# resize2fs /dev/myvg/mylv
+	
+Question: Create a logical volume and mount it permanently
+	- Create the logical volume with name "fedora" by using 20PE's from the volume group "redhat".
+	- Consider each PE size of volume group as "32MB"
+	- Mount it on /mnt/secret with file system xfs.
+Answer: --vgname= redhat, lvname= fedora, fs=xfs, mountpt= /mnt/secret, pesize= 32, pe's=20, (pe+2)*pesize = (20+2)*32 = 704
+	# fdisk /dev/vdb
+		: p
+		: n
+		: p
+		:
+		: +704M
+		: t
+		: 8e
+		: p
+		: w
+	# partprobe
+	# pvcreate /dev/vdb3
+	# vgcreate -s 32M redhat /dev/vdb3
+	# vgdisplay
+	# lvcreate -n fedora -l 20 redhat
+	# lvdisplay
+	# mkfs.xfs /dev/redhat/fedora
+	# mkdir /mnt/secret
+	# blkid /dev/redhat/fedora
+	# vim /etc/fstab  (add new line at the end)
+		UUID="UUID value" /mnt/secret xfs defaults 0 0
+	# systemctl daemon-reload
+	# mount -a
+	# vgdisplay
+	
+- Extend xfs file system
+	# lvextend -l +1 /dev/redhat/fedora
+	# df -hT
+	# xfs_growfs /mnt/secret
+	
+
 - # df -hT
 
-	2. GPT/UEFI partition scheme
+	2. GPT/UEFI partition scheme  ( you can add drive upt 8 Zigabites)
+	
+- 1kb=1024byte
+- 1mb = 1024kb
+- 1gb = 1024mb
+- 1Mib = (2^10)*2byte
+	
+-Parted command
+	# parted -l   (check the available space)
+	# parted /dev/vdb mklabel msdos
+	# parted -l
+	# parted /dev/vdb
+		mkpart
+		p       (or primary)
+		name of partition
+		xfs
+	start?	2048
+	end: 1001MB
+		q 
+	# parted /dev/vdb print
+	# udevadm settle
+	# mkfs.xfs /dev/vdb1
+	# mkdir /archieve
+	# lsblk --fs /dev/vdb
+	# vim /etc/fstab
+		UUID="UUID value" /archieve xfs defaults 0 0
+	# systemctl daemon-reload
+	# mount -a
+	# df -hT
+	
 
+-- Swap partition: 
+-- Swap memory:
+
+Question: Add a swap partition of 512MB and mount it permanently.
+Answer:	# fdisk -l /dev/vdb
+			: n 
+			: p 
+			:
+			: +512M 
+			: l 
+			: t 
+			: 4
+			: 82
+			:p 
+			:w
+		# partprobe
+		# mkswap /dev/vdb4
+		# vim /etc/fstab
+			UUID=""		swap swap defaults 0 0
+		# systemctl daemon-reload
+		# swapon -a
+		# free -m
+		
+		#lsblk 
+		
+Answer2: # parted -l
+		# parent /dev/vdb
+			mkpart
+			primary
+			linux-swap
+			1599     (start meaning is ending number for last partition size)
+			2112
+			p
+			rm 3  (removing 3rd partition as we created new partition. So, will remove and create a extended partition)
+			mkpart
+			extended
+			1599
+			3584
+			print free
+			mkpart
+			logical
+			linux-swap
+			1599
+			2136
+			I
+			p
+			q
+		# udevadm settle
+		# 
+		#
+		#
+
+
+
+/******** Network storage **********/
+Server: Anythin gin the system is used for sharing.
+ipaddress: dhcp server, db: database server, storage: SAN server, files: file server.
+client: who is receiving 
+prerequisites for Network file server(NFS):
+package: nfs, nfs-utils
+port no: 2049
+daemon: nfs-server
+nfs is not secure: rpc protocol (untrusted protocol)
+make nfs secure: kerberoes nfs-secure (user level)
+nfs doesn't support corss platform.
+service need to add on firewall: nfs, mountd, rpc-bind
+
+Configure NFS server:
+# yum install nfs* -y
+share a directory example:
+# mkdir /common
+# touch /common/coss{1..10}.txt
+# vim /etc/exports
+/common	serverd.example.com(ro)
+/common	172.25.250.10(rw)
+wq!
+# systemctl restart nfs-server.service
+# exportfs -rvf
+Go to client machine (ex: 172.25.250.10
+# showmount -e serverc		(check the accessibility)
+	you can find firewall issue. Go to serverc and check firewall
+serverc # firewall-cmd --list-all
+		# firewall-cmd --perminant --add-service=nfs
+		# firewall-cmd --reload
+		# firewall-cmd --list-all
+		# firewall-cmd --perminant --add-service=mountd
+		# firewall-cmd --perminant --add-service=rpc-bind
+		# firewall-cmd --reload
+		# firewall-cmd --list-all
+Go to client machine check
+	# showmount -e serverc
+
+Temporary mount of nfs:
+	# mount -t nfs serverc:/common /mnt
+	# df -hT
+	
+Permanent mount of nfs:
+	# showmount -e 172.25.250.12
+	# mkdir /storage
+	# vim /etc/fstab
+		serverc:/common		/storage	nfs		defaults	0	0
+	# systemctl daemon-reload
+	# mount -a
+	# df -hT
+Note: file permission is also importent if you want to write anything.
+
+Auto mounting: RHEL offers an alternative way of mounting and unmounting as NFS file system during runtime and system reboots and it is referred to as the AutoFS(Auto File System) service. AutoFS is a client-side service, which is used to mount an NFS file system on-demand.
+	1. direct mounting
+	2. indirect mounting
+	
+indirect mounting: # yum install autofs -y
+		# systemctl status autofs
+		# systemctl enable --now autofs				(start and enable)
+		# systemctl status autofs
+		# showmount -e serverc
+		# vim /etc/auto.master
+			shift+g (then add below line or under +auto.master)
+			/share		/etc/auto.misc
+		:wq!
+		# vim /etc/auto.misc
+			redhat		-rw,fstyoe=nfs		serverc:/common
+		:wq!
+		# systemctl restart autofs
+		# df -hT
+		# cd /share
+		# ls
+		# cd redhat
+		# ls
+
+Direct mounting:
+	# rpm -qa autofs
+	# yum install autofs -y
+	# systemctl enable --now autofs
+	# vim /etc/auto.master
+		/- /etc/auto.misc
+	# vim /etc/auto.misc
+		/share		-fstype=nfs,rw		serverc:/common
+	# systemctl restart autofs
+	# df -hT
+	# cd /share
+	# ls
+
+ldap used auto mounting:
+-----------------------
+	# yum install autofs -y
+	# systemctl enable --now autofs
+	# vim /etc/auto.master
+		/home/guest		/etc/auto.misc
+	# vim /etec/auto.misc
+		ldapuser5		-rw,fstype=nfs		servername.example.com:/home/guests/ldapuser5
+		*				-rw,fstype=nfs		servername.example.com:/home/guests/&			#(this is for all users)
+	# systemctl restart autofs
+	# su - ldapuser5
+	# pwd
+	
+
+
+/********* SELINUX ********/
+Traditionla Permissions:
+	chmod, chown, chgrp
+Special Permissions:
+	suid, sgid, stickybit
+Advanced permission:
+	setfacl, getfacl --- discreationary access control
+
+selinux - Secure enhanced linux (Mandotory access)
+	file and folders, processes, ports
+
+1. sestatus  (check selinux status)
+2. ls -lZ <file>		(to check selinux policy of a file)
+3. ls -ldZ <folders>
+4. ps -auZ 		<check selinux security)
+
+selinux having two modes
+1. enable
+	a. enforcing	(security must enforced, ie mandatory)
+	b. permissive	(
+2. disable
+
+config file: /etc/selinux/config
+
+Note: when you are changing enable to disable or vice versa, system reboot must
+	but chaning mode enforcing to permissive or vice versa, system reboot not required.
+
+# sestatus		(check status)
+# getenforce	(check current mode)
+# vim /etc/selinux/config
+
+Example: Webserver
+1. Package: httpd
+2. port: 80/443
+3. config: file= /etc/httpd/conf/httpd.conf
+4. daemod: httpd
+5. firewall: http
+6. document root: /var/www/html
+
+# sestatus
+# getenforce
+	enforcing
+# touch coss
+# ls -lZ coss
+# mkdir /custom
+# ls -ldZ /custom/
+
+--Design a webpage and:
+# yum install httpd -y
+# systemctl enable --now httpd		(enable and run)
+# systemctl status httpd
+# cd /var/www/html
+# vim index.html
+	This is Raja's webpage
+# firewall-cmd --list-all		(listing firewall services)
+# firewall-cmd --permanent --add-service=http		(adding service to firewal)
+# firewal-cmd --reload
+# curl http://serverb.example.com/			(see website content in terminal)
+# ls -lZ index.html		(check selinux permissions for index.html)
+
+# mv index.html /var/www/html/
+# cd /var/www/html/
+# ls
+# curl http://server.example.com		(see website contenct in terminal)
+	- Get an error message)
+# ls -lZ index.html
+# getenforce
+# setenforce 0		(permissive mode)
+# curl http://server.example.com	(now able to see the content)
+
+# setenforce 1		(enforce mode)
+# curl http://server.example.com	(now not able to see the content)
+
+# ls -lZ index.html
+# chcon -t httpd_sys_contenct_t index.html
+# curl http://server.example.com	(now able to see the content)
+
+-- recursively change selinux
+
+-- Example give port level security for port 82
+# rpm -qa httpd		(checking package)
+# systemctl status httpd
+# cat /var/www/html/index.html
+# curl http://servera.example.com:82
+	Getting an error
+# vim /etc/httpd/conf/httpd/conf
+	- change port number to 82
+		Listen 82
+# systemctl restart httpd
+# firewal-cmd --list-all
+# firewal-cmd --permanent --add-service=http
+# firewal-cmd --permanent --add-port=82/tcp					(add port)
+# firewal-cmd --reload
+# ls -lZ /var/www/html/index.html
+# chcon -t httpd_sys_contenct_t /var/www/html/index.html
+# man semanage port		(check document and get selinux change port command)
+# semanage port -a -t http_port_t -p tcp 82
+# systemctl restart httpd
+# curl http://servera.example.com:82
+
+# semanage port -l		(search non standard prot)
+# semanage port -l | grep ssh
+# man semanage port		(check selinux port document)
+
+--
+# ls -ldZ /custom
+# vim /custom/index.html
+	This is Raja webcontent
+# ls -lZ /custom/index.html
+# vim /etc/httpd/conf/httpd.conf
+	(change directory for web root directory like below)
+	DocumentRoot "/custom"
+	<Directory "/custom">
+		AllowOverride None
+		# Allow open access:
+		Require all granted
+	</Directory>
+# systemctl restart httpd
+# semanage fcontex -a -t httpd_sys_contenct_t '/custom(/.*)?'
+# ls -ldZ /custom
+# ls -lZ /custom/index.html
+# restorecon -Rv /custom			(changing contect inside custom folder)
+
+# seinfo -t | grep http
 
 
