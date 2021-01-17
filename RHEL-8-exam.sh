@@ -1710,5 +1710,5 @@ Example: Webserver
 # restorecon -Rv /custom			(changing contect inside custom folder)
 
 # seinfo -t | grep http
-
+ 
 
