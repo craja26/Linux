@@ -117,5 +117,49 @@ Answer: Here are all steps.
 	# podman stop mydb
 
 ----------------------------------------
+Question: Create a container running an Apache HTTP Server that also starts an interactive Bash shell in the container. Run a command using the container's shell, and then exit the container and verify that container is no longer running.
+	q1: Create a container named myweb that is running Apache HTTP Server 2.4, and also starts an interactive shell in the container. Use the regist.redhat.io/rhel8/httpd-24:1-105 container image. The following podman run command is very long and should be entered as a single line.
+Answer:
+	# podman run --name myweb -it regist.redhat.io/rhel8/httpd-24:1-105 /bin/bash
+	
+	q2: At the interactive shell prompt in the container, run the cat /etc/redhat-release command to display the contents of the /etc/redhat-release file in the container. Exit the container
+Answer:
+	bash-4.4$ cat /etc/redhat-release
+	bash-4.4$ exit
+	exit
+	$
+	q3. Verify that the myweb container is no longer running.
+	# podman ps 
+
+Question: Create a detached HTTPD web server container named mysecondweb. Connect to the container using its name, and then display the kernel name and release. Connect to the container a second time, but use the (-l) option to recall the ID of the container from the previous command and display the system load average. Leave the container running.
+	q1. Create a detached container name mysecondweb.
+Answer: podman run --name mysecondweb -d regist.redhat.io/rhel8/httpd-24:1-105
+
+	q2. Connect to the mysecondweb container to display the Linux name and kernel release using podman exec command.
+Answer: # podman exec mysecondweb uname -sr
+
+	q3. Run the podman exec command again, this time using the (-l) option to use the container ID from the previous command to display the system load average.
+Answer: # podman exec -l uptime
+
+-- Podman log - checking error information. 
+# podman log
+
+
+/********* Attaching Persistent Storage to a Container **********/
+- Mounting a Volume
+$ rpm -qa httpd
+$ mkdir -p ~/webcontent/html
+$ vim ~/webcontent/html/index.html
+	Hello world!
+$ ls -lRZ ~/webcontent/
+$ podman login registry.redhat.io
+	username:
+	password:
+$ podman run -d --name myweb -p 8888:8080 -v ~/webcontent:/var/www:Z registry.redhat.io/rhel8/httpd-24:1-98
+$ curl http://localhost:8888
+	Hello world!
+$ podman images
+
+-- persistent volume /persistent volume claim  ( check it)
 
 
